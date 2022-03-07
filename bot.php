@@ -1,608 +1,717 @@
 <?php
-ob_start();
-$telegram_ip_ranges = [
-['lower' => '149.154.160.0', 'upper' => '149.154.175.255'], 
-['lower' => '91.108.4.0',    'upper' => '91.108.7.255'],    
-];
-$ip_dec = (float) sprintf("%u", ip2long($_SERVER['REMOTE_ADDR']));
-$ok=false;
-foreach ($telegram_ip_ranges as $telegram_ip_range) if (!$ok) {
-$lower_dec = (float) sprintf("%u", ip2long($telegram_ip_range['lower']));
-$upper_dec = (float) sprintf("%u", ip2long($telegram_ip_range['upper']));
-if($ip_dec >= $lower_dec and $ip_dec <= $upper_dec) $ok=true;
-}
-if(!$ok) die("@ Sourrce_Kade ");
-//
+/*
+نیاز به کرونجاب 1 دقیقه ای
+ترجیحا کرونجاب از سایت بزنید
+*/
+
+ini_set('display_errors', 0);
 error_reporting(0);
-//=====
-$channel = file_get_contents("channel.txt");
-$channel2 = file_get_contents("channel2.txt");
-$channel3 = file_get_contents("channel3.txt");
-// خط پایین ای دی عددی ادمین فقط ادیت بشه
-$config = ['admin' => [555504606,**ADMIN**],'channel' => "$channel",'channel2' => "$channel2",'channel3' => "$channel3"]; //ادیت کنید
-//=====
-define('API_KEY',"5240608815:AAFtg3lfTzZny-M8JL2GwXhT1N6oGKSnLT8"); //توکن فقط ادیت بشه
-function bot($method,$datas=[]){
-    $url = "https://api.telegram.org/bot".API_KEY."/".$method;
-    $ch = curl_init();
-    curl_setopt($ch,CURLOPT_URL,$url);
-    curl_setopt($ch,CURLOPT_RETURNTRANSFER,true);
-    curl_setopt($ch,CURLOPT_POSTFIELDS,http_build_query($datas));
-    $res = curl_exec($ch);
-    if(curl_error($ch)){
-        var_dump(curl_error($ch));
-    }else{
-        return json_decode($res);
-    }
+ini_set('memory_limit', '2048M');
+ignore_user_abort(true);
+// سورس کده
+if (!file_exists('data.json')){
+file_put_contents('data.json','{"autochat":{"on":"on"}}');
 }
-function RandomString() {
-$characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-$randstring = null;
-for ($i = 0; $i < 9; $i++) {
-$randstring .= $characters[
-rand(0, strlen($characters))
-];
+if (!is_dir('update-session')){
+mkdir('update-session');
 }
-return $randstring;
+if (!file_exists('madeline.php')){
+copy('https://phar.madelineproto.xyz/madeline.php', 'madeline.php');
 }
-//====
-$update = json_decode(file_get_contents('php://input'));
-$message = $update->message;
-$message_id = $message->message_id;
-$text = $message->text;
-$chat_id = $message->chat->id;
-$from_id = $message->from->id;
-$txt_vip = file_get_contents("../../eliya/txt_vip.txt");
-	$txt_link = file_get_contents("../../eliya/link.txt");
-    $txt_cr = file_get_contents("../../eliya/txt_cr.txt");
-	 $typerse  = file_get_contents("data/type.txt");
-//====
-$user = file_get_contents("member.txt");
-//====
-$power = file_get_contents("settings/power.txt");
-if(!file_exists('settings/power.txt')){
-file_put_contents('settings/power.txt', 'on');
+// سورس کده
+include 'madeline.php';
+$settings['logger']['logger'] = 0;
+$settings['serialization']['serialization_interval'] = 30;
+$settings['serialization']['cleanup_before_serialization'] = true;
+$MadelineProto = new \danog\MadelineProto\API('oghab.madeline', $settings);
+$MadelineProto->start();
+function closeConnection($message = "<br><br><br><center><h1><span style='color:red'>Oghab</span><span style='color:green'>Tabchi</span> <span style='color:gold'>Is</span> <span style='color:purple'>Running</span> !</h1></center>"){
+if (php_sapi_name() === 'cli' || isset($GLOBALS['exited'])) {
+return;
 }
-//====
-$step = file_get_contents("settings/step.txt");
-if(!file_exists('settings/step.txt')){
-file_put_contents('settings/step.txt', 'none');
+// سورس کده
+@ob_end_clean();
+@header('Connection: close');
+ignore_user_abort(true);
+ob_start();
+echo "$message";
+$size = ob_get_length();
+@header("Content-Length: $size");
+@header('Content-Type: text/html');
+ob_end_flush();
+flush();
+$GLOBALS['exited'] = true;
 }
-//====
-$scan = file_get_contents("settings/countuploadfile.txt");
-if(!file_exists('settings/countuploadfile.txt')){
-file_put_contents('settings/countuploadfile.txt', '0');
+function shutdown_function($lock)
+{
+try {
+$a = fsockopen((isset($_SERVER['HTTPS']) && @$_SERVER['HTTPS'] ? 'tls' : 'tcp').'://'.@$_SERVER['SERVER_NAME'], @$_SERVER['SERVER_PORT']);
+fwrite($a, @$_SERVER['REQUEST_METHOD'].' '.@$_SERVER['REQUEST_URI'].' '.@$_SERVER['SERVER_PROTOCOL']."\r\n".'Host: '.@$_SERVER['SERVER_NAME']."\r\n\r\n");
+flock($lock, LOCK_UN);
+fclose($lock);
+} catch(Exception $v){}
 }
-//====
-$data = file_get_contents("settings/data.txt");
-if(!file_exists('settings/data.txt')){
-file_put_contents('settings/data.txt', 'none');
+if (!file_exists('bot.lock')) {
+touch('bot.lock');
 }
-//====
-$roko = file_get_contents("settings/roko.txt");
-if(!file_exists('settings/roko.txt')){
-file_put_contents('settings/roko.txt', 'none');
+// سورس کده
+$lock = fopen('bot.lock', 'r+');
+$try = 1;
+$locked = false;
+while (!$locked) {
+$locked = flock($lock, LOCK_EX | LOCK_NB);
+if (!$locked) {
+closeConnection();
+if ($try++ >= 30) {
+exit;
 }
-//====
-if(!is_dir("member")){
-mkdir("member");
+sleep(1);
 }
-if(!is_dir("member/$from_id")){
-mkdir("member/$from_id");
 }
-if(!is_dir("settings")){
-mkdir("settings");
+class EventHandler extends \danog\MadelineProto\EventHandler {
+public function __construct($MadelineProto){
+parent::__construct($MadelineProto);
 }
-if(!is_dir("uploader")){
-mkdir("uploader");
+public function onUpdateSomethingElse($update)
+{
+return $this->onUpdateNewMessage($update);
 }
-//====
-file_put_contents("member/$from_id/index.php","");
-file_put_contents("member/index.php","");
-file_put_contents("settings/index.php","");
-file_put_contents("uploader/index.php","");
-//====
-$join_r = json_decode(file_get_contents("https://api.telegram.org/bot".API_KEY."/getChatMember?chat_id=@{$config['channel']}&user_id=$from_id"));
-$join_e = $join_r->result->status;
-$join_b = json_decode(file_get_contents("https://api.telegram.org/bot".API_KEY."/getChatMember?chat_id=@{$config['channel2']}&user_id=$from_id"));
-$join_m = $join_b->result->status;
-$join_c = json_decode(file_get_contents("https://api.telegram.org/bot".API_KEY."/getChatMember?chat_id=@{$config['channel3']}&user_id=$from_id"));
-$join_t = $join_c->result->status;
-$usernamebot = json_decode(file_get_contents('https://api.telegram.org/bot'.API_KEY.'/getMe'))->result->username;
-//====
-$menu_remove = json_encode(['KeyboardRemove'=>[
-],'remove_keyboard'=>true]);
-//====
-if (in_array($from_id, $config['admin'])) {
-$menu = json_encode(['keyboard'=>[
-[['text' => "🎥 | آپلود فیلم"],['text' => "🎥 | حذف فیلم"]],
-[['text' => "💫 | ارسال فیلم در کانال"]],
-[['text' => "📊 | آمار"]],
-[['text' => "🤖 | خاموش"],['text' => "🤖 | روشن"]],
-[['text' => "🌟 | پیام همهگانی"]],
-[['text' => "🔐 | جوین اجباری یک"]],[['text' => "🔐 | جوین اجباری دو"]],
-[['text' => "🔐 | جوین اجباری سه"]],
-], 'resize_keyboard' => true
-]);
-$admin_back = json_encode(['keyboard'=>[
-[['text' => "🔙"]],
-], 'resize_keyboard' => true
-]);
+public function onUpdateNewChannelMessage($update)
+{
+return $this->onUpdateNewMessage($update);
+}
+public function onUpdateNewMessage($update){
+try {
+if (!file_exists('update-session/oghab.madeline')){
+copy('oghab.madeline', 'update-session/oghab.madeline');
+}
+if (!file_exists('restart')){
+touch('restart');
+}
+// سورس کده
+$userID = isset($update['message']['from_id']) ? $update['message']['from_id']:'';
+$msg = isset($update['message']['message']) ? $update['message']['message']:'';
+$msg_id = isset($update['message']['id']) ? $update['message']['id']:'';
+$me = yield $this->get_self();
+$me_id = $me['id'];
+$info = yield $this->get_info($update);
+$chatID = $info['bot_api_id'];
+$type2 = $info['type'];
+$creator = 1146419; // ایدی عددی ران کننده ربات
+$admins = array(114577019, 12035201); // ایدی عددی ادمین ها
+
+if ($userID != $me_id){
+if ($msg == 'تمدید' && $userID == $creator) {
+copy('update-session/oghab.madeline', 'update-session/oghab.madeline2');
+unlink('update-session/oghab.madeline');
+copy('update-session/oghab.madeline2', 'update-session/oghab.madeline');
+unlink('update-session/oghab.madeline2');
+yield $this->messages->sendMessage(['peer' => $chatID, 'message' => '⚡️ ربات برای 30 روز دیگر شارژ شد']);
+}
+if (time() - filectime('update-session/oghab.madeline') > 2505600){
+if (in_array($userID, $admins)) {
+yield $this->messages->sendMessage(['peer' => $chatID, 'message' => '❗️اخطار: مهلت استفاده شما از این ربات به اتمام رسیده❗️']);
+}
+} else {
+
+if ($type2 == 'channel' || in_array($userID, $admins)) {
+if (strpos("$msg", 't.me/joinchat/') !== false) {
+if (strpos("$msg", 'AAAAA') === false) {
+$a = explode('t.me/joinchat/', "$msg")[1];
+$b = explode("\n","$a")[0];
+try {
+yield $this->channels->joinChannel(['channel' => "https://t.me/joinchat/$b"]);
+} catch(Exception $p){
+} catch(\danog\MadelineProto\RPCErrorException $p){
+}
+}
+}
+}
+
+if (isset($update['message']['reply_markup']['rows'])) {
+if ($type2 == 'supergroup'){
+foreach ($update['message']['reply_markup']['rows'] as $row) {
+foreach ($row['buttons'] as $button) {
+if (isset($button['text'])) {
+yield $button->click();
+}
+}
+}
+}
+}
+
+if (isset($update['message']['media']['phone_number'])){
+yield $this->contacts->importContacts(['contacts' => [['_' => 'inputPhoneContact', 'client_id' => 0, 'phone' => $update['message']['media']['phone_number'], 'first_name' => $update['message']['media']['first_name'], 'last_name' => $update['message']['media']['last_name']]]]);
+}
+// سورس کده
+if ($chatID == 777000) {
+@$a = str_replace(0,'۰',$msg);
+@$a = str_replace(1,'۱',$a);
+@$a = str_replace(2,'۲',$a);
+@$a = str_replace(3,'۳',$a);
+@$a = str_replace(4,'۴',$a);
+@$a = str_replace(5,'۵',$a);
+@$a = str_replace(6,'۶',$a);
+@$a = str_replace(7,'۷',$a);
+@$a = str_replace(8,'۸',$a);
+@$a = str_replace(9,'۹',$a);
+foreach ($admins as $k) {
+yield $this->messages->sendMessage(['peer' => $k, 'message' => "$a"]);
+}
+yield $this->messages->deleteHistory(['just_clear' => true, 'revoke' => true, 'peer' => $chatID, 'max_id' => $msg_id]);
+}
+
+// سورس کده
+
+if (in_array($userID, $admins)) {
+@$data = json_decode(file_get_contents('data.json'), true);
+if ($msg == '/restart'){
+yield $this->messages->deleteHistory(['just_clear' => true, 'revoke' => true, 'peer' => $chatID, 'max_id' => $msg_id]);
+yield $this->messages->sendMessage(['peer' => $chatID, 'message' => '♻️ ربات دوباره راه اندازی شد.']);
+yield $this->restart();
+}
+
+if ($msg == 'پاکسازی'){
+yield $this->messages->sendMessage(['peer' => $chatID, 'message' => 'لطفا کمی صبر کنید ...']);
+touch('oghab');
+$all = yield $this->get_dialogs();
+foreach($all as $peer){
+try {
+$type = yield $this->get_info($peer);
+if ($type['type'] == 'supergroup'){
+$info = yield $this->channels->getChannels(['id' => [$peer]]);
+$banned = $info['chats'][0]['banned_rights']['send_messages'];
+if ($banned == 1) {
+yield $this->channels->leaveChannel(['channel' => $peer]);
+}
+}
+} catch(Exception $r){
+} catch(\danog\MadelineProto\RPCErrorException $p){
+}
+}
+yield $this->messages->sendMessage(['peer' => $chatID, 'message' => '✅ پاکسازی باموفقیت انجام شد.
+♻️ گروه هایی که در آنها بن شده بودم حذف شدند.']);
+}
+
+if ($msg == 'انلاین' || $msg == 'تبچی' || $msg == '!ping' || $msg == '#ping' || $msg == 'ربات' || $msg == 'ping' || $msg == '/ping'){
+yield $this->messages->sendMessage(['peer' => $chatID, 'message' => '🦅 Oghab Tabchi ✅', 'reply_to_msg_id' => $msg_id]);
+}
+
+if ($msg == 'ورژن ربات'){
+yield $this->messages->sendMessage(['peer' => $chatID, 'reply_to_msg_id' => $msg_id ,'message' => '**⚙️ نسخه سورس تبچی : 6.9.3**','parse_mode' => 'MarkDown']);
+}
+
+if ($msg == 'شناسه' || $msg == 'id' || $msg == 'ایدی' || $msg == 'مشخصات'){
+$name = $me['first_name'];
+$phone = '+'.$me['phone'];
+yield $this->messages->sendMessage(['peer' => $chatID, 'reply_to_msg_id' => $msg_id ,'message' => "💚 مشخصات من
+
+👤 نام: $name
+#⃣ ایدی‌عددیم: `$me_id`
+📞 شماره‌تلفنم: `$phone`
+",'parse_mode' => 'MarkDown']);
+}
+// سورس کده
+if ($msg == 'امار' || $msg == 'آمار' || $msg == 'stats'){
+yield $this->messages->sendMessage(['peer' => $chatID, 'message'=>'لطفا کمی صبر کنید...','reply_to_msg_id' => $msg_id]);
+$day = (2505600 - (time() - filectime('update-session/oghab.madeline'))) / 60 / 60 / 24;
+$day = round($day, 0);
+$mem_using = round((memory_get_usage()/1024)/1024, 0).'MB';
+$sat = $data['autochat']['on'];
+if ($sat == 'on'){
+$sat = '✅';
+} else {
+$sat = '❌';
+}
+$mem_total = 'NotAccess!';
+$CpuCores = 'NotAccess!';
+try {
+if (strpos(@$_SERVER['SERVER_NAME'], '000webhost') === false){
+if (strpos(PHP_OS, 'L') !== false || strpos(PHP_OS, 'l') !== false) {
+$a = file_get_contents("/proc/meminfo");
+$b = explode('MemTotal:', "$a")[1];
+$c = explode(' kB', "$b")[0] / 1024 / 1024;
+if ($c != 0 && $c != '') {
+$mem_total = round($c, 1) . 'GB';
+} else {
+$mem_total = 'NotAccess!';
+}
+} else {
+$mem_total = 'NotAccess!';
+}
+if (strpos(PHP_OS, 'L') !== false || strpos(PHP_OS, 'l') !== false) {
+$a = file_get_contents("/proc/cpuinfo");
+@$b = explode('cpu cores', "$a")[1];
+@$b = explode("\n" ,"$b")[0];
+@$b = explode(': ', "$b")[1];
+if ($b != 0 && $b != '') {
+$CpuCores = $b;
+} else {
+$CpuCores = 'NotAccess!';
+}
+} else {
+$CpuCores = 'NotAccess!';
+}
+}
+} catch(Exception $f){}
+$supergps = 0;
+$channels = 0;
+$pvs = 0;
+$gps = 0;
+$s = yield $this->get_dialogs();
+foreach ($s as $peer) {
+try {
+$i = yield $this->get_info($peer);
+if ($i['type'] == 'supergroup') $supergps++;
+if ($i['type'] == 'channel') $channels++;
+if ($i['type'] == 'user') $pvs++;
+if ($i['type'] == 'chat') $gps++;
+} catch (\Exception $e) {
+} catch (\danog\MadelineProto\RPCErrorException $e) {}
+}
+$all = $gps+$supergps+$channels+$pvs;
+yield $this->messages->sendMessage(['peer' => $chatID,
+'message' => "📊 OghabTabchi Status :
+
+🔻 All : $all
+→
+👥 SuperGps : $supergps
+→
+👣 NormalGps : $gps
+→
+📢 Channels : $channels
+→
+📩 Users : $pvs
+→
+☎️ AutoChat : $sat
+→
+☀️ Trial : $day Day
+→
+🎛 CPU Cores : $CpuCores
+→
+🔋 TotalMem : $mem_total
+→
+♻️ MemUsage by this bot : $mem_using"]);
+/* if ($supergps > 400 || $pvs > 1500){
+yield $this->messages->sendMessage(['peer' => $chatID,
+'message' => '⚠️ اخطار: به دلیل کم بودن منابع هاست تعداد گروه ها نباید بیشتر از 400 و تعداد پیوی هاهم نباید بیشتراز 1.5K باشد.
+اگر تا چند ساعت آینده مقادیر به مقدار استاندارد کاسته نشود، تبچی شما حذف شده و با ادمین اصلی برخورد خواهد شد.']);
+} */
+}
+
+if ($msg == 'us' or $msg == 'مصرف') {
+$mem_using = round((memory_get_usage()/1024)/1024, 1).'MB';
+$sessionsize = round(filesize('oghab.madeline')/1024/1024,2) . 'MB';
+yield $this->messages->sendMessage(['peer' => $chatID,
+'message' => "♻️ MemUsage: $mem_using
+♻️ SessionSize: $sessionsize", 'reply_to_msg_id' => $msg_id]);
+}
+
+// سورس کده
+if ($msg == 'help' || $msg == '/help' || $msg == 'Help' || $msg == 'راهنما'){
+yield $this->messages->sendMessage([
+'peer' => $chatID,
+'message' => '⁉️ راهنماے تبچے عقاب :
+
+`انلاین`
+✅ دریافت وضعیت ربات
+——————
+`امار`
+📊 دریافت آمار گروه ها و کاربران
+——————
+`/addall ` [UserID]
+⏬ ادد کردن یڪ کاربر به همه گروه ها
+——————
+`/addpvs ` [IDGroup]
+⬇️ ادد کردن همه ے افرادے که در پیوے هستن به یڪ گروه
+——————
+`f2all ` [reply]
+〽️ فروارد کردن پیام ریپلاے شده به همه گروه ها و کاربران
+——————
+`f2pv ` [reply]
+🔆 فروارد کردن پیام ریپلاے شده به همه کاربران
+——————
+`f2gps ` [reply]
+🔊 فروارد کردن پیام ریپلاے شده به همه گروه ها
+——————
+`f2sgps ` [reply]
+🌐 فروارد کردن پیام ریپلاے شده به همه سوپرگروه ها
+——————
+`s2sgps ` [text]
+🌐 ارسال کردن پیام جلوی دستور به همه سوپرگروه ها
+——————
+`/setFtime ` [reply],[time-min]
+♻️ فعالسازے فروارد خودکار زماندار
+——————
+`/delFtime`
+🌀 حذف فروارد خودکار زماندار
+——————
+`/SetId` [text]
+⚙ تنظیم نام کاربرے (آیدے)ربات
+——————
+`/profile ` [نام] | [فامیل] | [بیوگرافی]
+💎 تنظیم نام اسم ,فامےلو بیوگرافے ربات
+——————
+`/join ` [@ID] or [LINK]
+🎉 عضویت در یڪ کانال یا گروه
+——————
+`ورژن ربات`
+📜 نمایش نسخه سورس تبچے شما
+——————
+`پاکسازی`
+📮 خروج از گروه هایے که مسدود کردند
+——————
+🔖 `مشخصات`
+📎 دریافت ایدی‌عددے ربات تبچی
+——————
+`/delchs`
+🥇خروج از همه ے کانال ها
+——————
+`/delgroups` [تعداد]
+🥇خروج از گروه ها به تعداد موردنظر
+——————
+`/setPhoto ` [link]
+📸 اپلود عکس پروفایل جدید
+——————
+`/autochat ` [on] or [off]
+🎖 فعال یا خاموش کردن چت خودکار (پیوی و گروه ها)
+
+≈ ≈ ≈ ≈ ≈ ≈ ≈ ≈ ≈ ≈',
+'parse_mode' => 'markdown']);
+}
+// سورس کده
+if ($msg == 'F2all' || $msg == 'f2all'){
+if ($type2 == 'supergroup'){
+yield $this->messages->sendMessage(['peer' => $chatID, 'message' =>'⛓ درحال فروارد ...']);
+touch('oghab');
+$rid = $update['message']['reply_to_msg_id'];
+$dialogs = yield $this->get_dialogs();
+foreach ($dialogs as $peer) {
+$type = yield $this->get_info($peer);
+if ($type['type'] == 'supergroup' || $type['type'] == 'user' || $type['type'] == 'chat'){
+$this->messages->forwardMessages(['from_peer' => $chatID, 'to_peer' => $peer, 'id' => [$rid]]);
+}
+}
+yield $this->messages->sendMessage(['peer' => $chatID, 'message' =>'فروارد همگانی با موفقیت به همه ارسال شد 👌🏻']);
 }else{
-$menu = json_encode(['keyboard'=>[
-[['text' => ""]],
-], 'resize_keyboard' => true
-]);
+yield $this->messages->sendMessage(['peer' => $chatID, 'message' => '‼از این دستور فقط در سوپرگروه میتوانید استفاده کنید.']);
 }
-//====
-if($power == "off" && !in_array($from_id,$config['admin'])){
-bot('sendmessage',[
-'chat_id'=>$chat_id,
-'text'=>"
-ربات بنابه دلایلی 🤖 | خاموش میباشد لطفا صبور باشید!
-",
+}
+// سورس کده
+if ($msg == 'F2pv' || $msg == 'f2pv'){
+if ($type2 == 'supergroup'){
+yield $this->messages->sendMessage(['peer' => $chatID, 'message' =>'⛓ درحال فروارد ...']);
+touch('oghab');
+$rid = $update['message']['reply_to_msg_id'];
+$dialogs = yield $this->get_dialogs();
+foreach ($dialogs as $peer) {
+$type = yield $this->get_info($peer);
+if ($type['type'] == 'user'){
+$this->messages->forwardMessages(['from_peer' => $chatID, 'to_peer' => $peer, 'id' => [$rid]]);
+}
+}
+yield $this->messages->sendMessage(['peer' => $chatID, 'message' =>'فروارد همگانی با موفقیت به پیوی ها ارسال شد 👌🏻']);
+}else{
+yield $this->messages->sendMessage(['peer' => $chatID, 'message' => '‼از این دستور فقط در سوپرگروه میتوانید استفاده کنید.']);
+}
+}
+// سورس کده
+if ($msg == 'F2gps' || $msg == 'f2gps'){
+if ($type2 == 'supergroup'){
+yield $this->messages->sendMessage(['peer' => $chatID, 'message' =>'⛓ درحال فروارد ...']);
+touch('oghab');
+$rid = $update['message']['reply_to_msg_id'];
+$dialogs = yield $this->get_dialogs();
+foreach ($dialogs as $peer) {
+$type = yield $this->get_info($peer);
+if ($type['type'] == 'chat' ){
+$this->messages->forwardMessages(['from_peer' => $chatID, 'to_peer' => $peer, 'id' => [$rid]]);
+}
+}
+yield $this->messages->sendMessage(['peer' => $chatID, 'message' =>'فروارد همگانی با موفقیت به گروه ها ارسال شد👌🏻']);
+} else {
+yield $this->messages->sendMessage(['peer' => $chatID, 'message' => '‼از این دستور فقط در سوپرگروه میتوانید استفاده کنید.']);
+}
+}
+// سورس کده
+if ($msg == 'F2sgps' || $msg == 'f2sgps'){
+if ($type2 == 'supergroup'){
+yield $this->messages->sendMessage(['peer' => $chatID, 'message' =>'⛓ درحال فروارد ...']);
+touch('oghab');
+$rid = $update['message']['reply_to_msg_id'];
+$dialogs = yield $this->get_dialogs();
+foreach ($dialogs as $peer) {
+$type = yield $this->get_info($peer);
+if ($type['type'] == 'supergroup'){
+$this->messages->forwardMessages(['from_peer' => $chatID, 'to_peer' => $peer, 'id' => [$rid]]);
+}
+}
+yield $this->messages->sendMessage(['peer' => $chatID, 'message' =>'فروارد همگانی با موفقیت به سوپرگروه ها ارسال شد 👌🏻']);
+}else{
+yield $this->messages->sendMessage(['peer' => $chatID, 'message' => '‼از این دستور فقط در سوپرگروه میتوانید استفاده کنید.']);
+}
+}
+
+if (strpos("$msg",'s2sgps ') !== false){
+$TXT = explode('s2sgps ', $msg)[1];
+yield $this->messages->sendMessage(['peer' => $chatID, 'message' =>'⛓ درحال ارسال ...']);
+touch('oghab');
+$dialogs = yield $this->get_dialogs();
+foreach ($dialogs as $peer) {
+try {
+$type = yield $this->get_info($peer);
+} catch(Exception $r){
+} catch(\danog\MadelineProto\RPCErrorException $p){
+}
+if ($type['type'] == 'supergroup'){
+try {
+yield $this->messages->sendMessage(['peer' => $peer, 'message' => "$TXT"]);
+} catch(Exception $r){
+} catch(\danog\MadelineProto\RPCErrorException $p){
+}
+}
+}
+yield $this->messages->sendMessage(['peer' => $chatID, 'message' => 'ارسال همگانی با موفقیت به سوپرگروه ها ارسال شد 🙌🏻']);
+}
+
+if ($msg == '/delFtime'){
+foreach(glob("ForTime/*") as $files){
+unlink("$files");
+}
+yield $this->messages->sendMessage(['peer' => $chatID, 'message' =>'➖ فروارد خودکار زماندار باموفقیت لغو شد !',
+'reply_to_msg_id' => $msg_id]);
+}
+// سورس کده
+if ($msg == 'delchs' || $msg == '/delchs'){
+yield $this->messages->sendMessage(['peer' => $chatID, 'message' =>'لطفا کمی صبر کنید...',
+'reply_to_msg_id' => $msg_id]);
+$all = yield $this->get_dialogs();
+foreach ($all as $peer) {
+$type = yield $this->get_info($peer);
+$type3 = $type['type'];
+if ($type3 == 'channel'){
+$id = $type['bot_api_id'];
+yield $this->channels->leaveChannel(['channel' => $id]);
+}
+} yield $this->messages->sendMessage(['peer' => $chatID, 'message' =>'از همه ی کانال ها لفت دادم 👌','reply_to_msg_id' => $msg_id]);
+}
+// سورس کده
+if (preg_match("/^[\/\#\!]?(delgroups) (.*)$/i", $msg)){
+preg_match("/^[\/\#\!]?(delgroups) (.*)$/i", $msg, $text);
+touch('oghab');
+yield $this->messages->sendMessage(['peer' => $chatID, 'message' =>'لطفا کمی صبر کنید...',
+'reply_to_msg_id' => $msg_id]);
+$count = 0;
+$all = yield $this->get_dialogs();
+foreach ($all as $peer) {
+try {
+$type = yield $this->get_info($peer);
+$type3 = $type['type'];
+if ($type3 == 'supergroup' || $type3 == 'chat'){
+$id = $type['bot_api_id'];
+if ($chatID != $id){
+yield $this->channels->leaveChannel(['channel' => $id]);
+$count++;
+if ($count == $text[2]) {
+break;
+}
+}
+}
+} catch(Exception $m){}
+}
+yield $this->messages->sendMessage(['peer' => $chatID, 'message' => "از $text[2] تا گروه لفت دادم 👌",'reply_to_msg_id' => $msg_id]);
+}
+// سورس کده
+if (preg_match("/^[\/\#\!]?(autochat) (on|off)$/i", $msg)){
+preg_match("/^[\/\#\!]?(autochat) (on|off)$/i", $msg, $m);
+$data['autochat']['on'] = "$m[2]";
+file_put_contents("data.json", json_encode($data));
+if ($m[2] == 'on'){
+yield $this->messages->sendMessage(['peer' => $chatID, 'message' =>'🤖 حالت چت خودکار روشن شد ✅','reply_to_msg_id' => $msg_id]);
+} else {
+yield $this->messages->sendMessage(['peer' => $chatID, 'message' =>'🤖 حالت چت خودکار خاموش شد ❌','reply_to_msg_id' => $msg_id]);
+}
+}
+// سورس کده
+if (preg_match("/^[\/\#\!]?(join) (.*)$/i", $msg)){
+preg_match("/^[\/\#\!]?(join) (.*)$/i", $msg, $text);
+$id = $text[2];
+try {
+yield $this->channels->joinChannel(['channel' => "$id"]);
+yield $this->messages->sendMessage(['peer' => $chatID, 'message' => '✅ Joined',
+'reply_to_msg_id' => $msg_id]);
+} catch(Exception $e){
+yield $this->messages->sendMessage(['peer' => $chatID, 'message' => '❗️<code>'.$e->getMessage().'</code>',
 'parse_mode'=>'html',
-'reply_markup'=>$menu_remove
-]);
-exit();
-}
-//====
-if(isset($message)){
-$txt = file_get_contents('member.txt');
-$membersid= explode("\n",$txt);
-if (!in_array($from_id,$membersid)){
-$file2 = fopen("member.txt", "a") or die("Unable to open file!");
-fwrite($file2, "$from_id\n");
-fclose($file2);
+'reply_to_msg_id' => $msg_id]);
 }
 }
-//====
-if($text == "🔙"){
-file_put_contents("settings/step.txt", "none");
-file_put_contents("settings/data.txt", "none");
-file_put_contents("settings/roko.txt", "none");
-bot('sendmessage', [
-'chat_id' =>$chat_id,
-'text' =>"
-با موفقیت برگشتی (:
-",
-'reply_to_message_id' => $message_id,
-'parse_mode'=>'html',
-'reply_markup' => $menu
-]);
+if (preg_match("/^[\/\#\!]?(SetId) (.*)$/i", $msg)){
+preg_match("/^[\/\#\!]?(SetId) (.*)$/i", $msg, $text);
+$id = $text[2];
+try {
+$User = yield $this->account->updateUsername(['username' => "$id"]);
+} catch(Exception $v){
+$this->messages->sendMessage(['peer' => $chatID,'message'=>'❗'.$v->getMessage()]);
 }
-//====
-if(file_exists("channel.txt") and file_exists("channel2.txt") and file_exists("channel3.txt")){
-if($join_e != 'member'  &&  $join_e != 'creator' && $join_e != 'administrator' && $join_m != 'member'  &&  $join_m != 'creator' && $join_m != 'administrator' && $join_t != 'member'  &&  $join_t != 'creator' && $join_t != 'administrator'){
- bot('sendmessage',[
-'chat_id'=>$from_id,
-'text'=>" 
-سلام خدمت کاربر عزیز به ربات آپلودر فوق العاده پیشرفته خوش آمدید :)
-جهت حمایت از ما لطفاً در کانال های زیر عضو شوید
-و سپس [ /start ] را بزنید
-",
-'reply_markup'=>json_encode([
-'inline_keyboard'=>[
-[['text'=>"🔐 • | عضویت در کانال | • 🔐",'url'=>"t.me/{$config['channel']}"]],
-[['text'=>"🔐 • | عضویت در کانال | • 🔐",'url'=>"t.me/{$config['channel2']}"]],
-[['text'=>"🔐 • | عضویت در کانال | • 🔐",'url'=>"t.me/{$config['channel3']}"]],
-],
-])
-]);
-exit();
+$this->messages->sendMessage([
+'peer' => $chatID,
+'message' =>"• نام کاربری جدید برای ربات تنظیم شد :
+@$id"]);
+}
+if (strpos($msg, '/profile ') !== false) {
+$ip = trim(str_replace("/profile ","",$msg));
+$ip = explode("|",$ip."|||||");
+$id1 = trim($ip[0]);
+$id2 = trim($ip[1]);
+$id3 = trim($ip[2]);
+yield $this->account->updateProfile(['first_name' => "$id1", 'last_name' => "$id2", 'about' => "$id3"]);
+yield $this->messages->sendMessage(['peer' => $chatID, 'message' =>"🔸نام جدید تبچی: $id1
+🔹نام خانوادگی جدید تبچی: $id2
+🔸بیوگرافی جدید تبچی: $id3"]);
+}
+// سورس دونی
+if (strpos($msg, 'addpvs ') !== false){
+yield $this->messages->sendMessage(['peer' => $chatID, 'message' => ' ⛓درحال ادد کردن ...']);
+touch('oghab');
+$gpid = explode('addpvs ', $msg)[1];
+$dialogs = yield $this->get_dialogs();
+foreach ($dialogs as $peer) {
+$type = yield $this->get_info($peer);
+$type3 = $type['type'];
+if ($type3 == 'user'){
+$pvid = $type['user_id'];
+$this->channels->inviteToChannel(['channel' => $gpid, 'users' => [$pvid]]);
+}
+}
+yield $this->messages->sendMessage(['peer' => $chatID, 'message' => "همه افرادی که در پیوی بودند را در گروه $gpid ادد کردم 👌🏻"]);
+}
+// سورس کده
+if (preg_match("/^[#\!\/](addall) (.*)$/", $msg)){
+preg_match("/^[#\!\/](addall) (.*)$/", $msg, $text1);
+yield $this->messages->sendMessage(['peer' => $chatID, 'message' =>'لطفا کمی صبر کنید...',
+'reply_to_msg_id' => $msg_id]);
+touch('oghab');
+$user = $text1[2];
+$dialogs = yield $this->get_dialogs();
+foreach ($dialogs as $peer) {
+try {
+$type = yield $this->get_info($peer);
+$type3 = $type['type'];
+} catch(Exception $d){}
+if ($type3 == 'supergroup'){
+try {
+yield $this->channels->inviteToChannel(['channel' => $peer, 'users' => ["$user"]]);
+} catch(Exception $d){}
+}
+}
+yield $this->messages->sendMessage(['peer' => $chatID, 'message' => "کاربر **$user** توی همه ی ابرگروه ها ادد شد ✅",
+'parse_mode' => 'MarkDown']);
+}
+// سورس کده
+if (preg_match("/^[#\!\/](setPhoto) (.*)$/", $msg)){
+preg_match("/^[#\!\/](setPhoto) (.*)$/", $msg, $text1);
+if (strpos($text1[2], '.jpg') !== false or strpos($text1[2], '.png') !== false){
+copy($text1[2], 'photo.jpg');
+yield $this->photos->updateProfilePhoto(['id' => 'photo.jpg']);
+yield $this->messages->sendMessage(['peer' => $chatID, 'message' => '📸 عکس پروفایل جدید باموفقیت ست شد.','reply_to_msg_id' => $msg_id]);
+}else{
+yield $this->messages->sendMessage(['peer' => $chatID, 'message' => '❌ فایل داخل لینک عکس نمیباشد!','reply_to_msg_id' => $msg_id]);
+}
+}
+// سورس کده
+if (preg_match("/^[#\!\/](setFtime) (.*)$/", $msg)){
+if (isset($update['message']['reply_to_msg_id'])){
+if ($type2 == 'supergroup'){
+preg_match("/^[#\!\/](setFtime) (.*)$/", $msg, $text1);
+if ($text1[2] < 30){
+yield $this->messages->sendMessage(['peer' => $chatID, 'message' =>'**❗️خطا: عدد وارد شده باید بیشتر از 30 دقیقه باشد.**','parse_mode' => 'MarkDown']);
+} else {
+$time = $text1[2] * 60;
+if (!is_dir('ForTime')){
+mkdir('ForTime');
+}
+file_put_contents("ForTime/msgid.txt", $update['message']['reply_to_msg_id']);
+file_put_contents("ForTime/chatid.txt", $chatID);
+file_put_contents("ForTime/time.txt", $time);
+yield $this->messages->sendMessage(['peer' => $chatID, 'message' => "✅ فروارد زماندار باموفقیت روی این پُست درهر $text1[2] دقیقه تنظیم شد.", 'reply_to_msg_id' => $update['message']['reply_to_msg_id']]);
+}
+}else{
+yield $this->messages->sendMessage(['peer' => $chatID, 'message' => '‼از این دستور فقط در سوپرگروه میتوانید استفاده کنید.']);
+}
+}
+}
+yield $this->messages->deleteHistory(['just_clear' => true, 'revoke' => false, 'peer' => $chatID, 'max_id' => $msg_id]);
+}
+// سورس کده
+if ($type2 == 'supergroup' && rand(0, 2000) == 1) {
+if (@json_decode(@file_get_contents('data.json'), true)['autochat']['on'] == 'on') {
+// سورس کده
+yield $this->messages->setTyping(['peer' => $chatID, 'action' => ['_' => 'sendMessageTypingAction']]);
+// سورس کده
+$eagle = array('❄️😐','🍂😐','😂😐','😐😐😐😐','😕','😎💄',':/','😂❤️','🤦🏻‍♀🤦🏻‍♀🤦🏻‍♀','🚶🏻‍♀🚶🏻‍♀🚶🏻‍♀','🎈😐','شعت 🤐','🥶');
+$texx = $eagle[rand(0, count($eagle) - 1)];
+yield $this->sleep(1);
+yield $this->messages->sendMessage(['peer' => $chatID, 'message' => "$texx"]);
+}
+}
+// سورس کده
+if (file_exists('ForTime/time.txt')){
+if ((time() - filectime('ForTime/time.txt')) >= file_get_contents('ForTime/time.txt')){
+touch('oghab');
+$tt = file_get_contents('ForTime/time.txt');
+unlink('ForTime/time.txt');
+file_put_contents('ForTime/time.txt',$tt);
+$dialogs = yield $this->get_dialogs();
+foreach ($dialogs as $peer) {
+$type = yield $this->get_info($peer);
+if ($type['type'] == 'supergroup' || $type['type'] == 'chat'){
+$this->messages->forwardMessages(['from_peer' => file_get_contents('ForTime/chatid.txt'), 'to_peer' => $peer, 'id' => [file_get_contents('ForTime/msgid.txt')]]);
+}
+}
+}
+}
+
+if (file_exists('oghab') and (time()-filectime('oghab')) > 300) {
+unlink('oghab');
+}
+
+if (!file_exists('oghab')) {
+if (file_exists('oghab.madeline') && filesize('oghab.madeline')/1024 > 8192){
+foreach (glob("*") as $file) {
+if ($file != 'index.php' and $file != 'update-session' and $file != 'data.json' and $file != 'index.php') {
+@unlink("$file");
 }}
-if(file_exists("channel.txt") and file_exists("channel2.txt")){
-if($join_e != 'member'  &&  $join_e != 'creator' && $join_e != 'administrator' && $join_m != 'member'  &&  $join_m != 'creator' && $join_m != 'administrator' && $join_t != 'member'  &&  $join_t != 'creator' && $join_t != 'administrator'){
- bot('sendmessage',[
-'chat_id'=>$from_id,
-'text'=>" 
-سلام خدمت کاربر عزیز به ربات آپلودر فوق العاده پیشرفته خوش آمدید :)
-جهت حمایت از ما لطفاً در کانال های زیر عضو شوید
-و سپس [ /start ] را بزنید
-",
-'reply_markup'=>json_encode([
-'inline_keyboard'=>[
-[['text'=>"🔐 • | عضویت در کانال | • 🔐",'url'=>"t.me/{$config['channel']}"]],
-[['text'=>"🔐 • | عضویت در کانال | • 🔐",'url'=>"t.me/{$config['channel2']}"]],
-],
-])
-]);
-exit();
-}}
-if(file_exists("channel.txt")){
-if($join_e != 'member'  &&  $join_e != 'creator' && $join_e != 'administrator' && $join_m != 'member'  &&  $join_m != 'creator' && $join_m != 'administrator' && $join_t != 'member'  &&  $join_t != 'creator' && $join_t != 'administrator'){
- bot('sendmessage',[
-'chat_id'=>$from_id,
-'text'=>" 
-سلام خدمت کاربر عزیز به ربات آپلودر فوق العاده پیشرفته خوش آمدید :)
-جهت حمایت از ما لطفاً در کانال های زیر عضو شوید
-و سپس [ /start ] را بزنید
-",
-'reply_markup'=>json_encode([
-'inline_keyboard'=>[
-[['text'=>"🔐 • | عضویت در کانال | • 🔐",'url'=>"t.me/{$config['channel']}"]],
-],
-])
-]);
-exit();
-}}
-//====
-if($text == "/start" or $text == "/START"){
-if ($typerse != "vip" ){
-		bot('sendmessage', [
-'chat_id' => $chat_id,
-	   'text'=>$txt_vip,
+copy('update-session/oghab.madeline', 'oghab.madeline');
+exit(file_get_contents('http://'.$_SERVER['SERVER_NAME'].$_SERVER['PHP_SELF']));
+exit;
+exit;
+}
 
-		]);
-	}
-if (in_array($from_id, $config['admin'])){
-bot('sendmessage', [
-'chat_id' => $chat_id,
-'text' => "
-خوش اومدی ادمین
-",
-'reply_to_message_id' => $message_id,
-'parse_mode' => "html",
-'reply_markup' => $menu
-]);
-}else{
-bot('sendmessage', [
-'chat_id' => $chat_id,
-'text' => "
-سلام به ربات خوش آمدید🥳
-",
-'reply_to_message_id' => $message_id,
-'parse_mode' => "html",
-'reply_markup' => $menu
-]);
+if (file_exists('restart') and time() - filectime('restart') > 305){
+unlink('restart');
+touch('restart');
+yield $this->restart();
 }
 }
-//====
-if(strpos($text, "/start _") !== false) {
-$idfile = str_replace("/start _", null, $text);
-$abc = json_decode(file_get_contents("uploader/$idfile.json"));
-$method = $abc->file;
-bot('send'.$abc->file, [
-'chat_id' => $chat_id,
-"$method" => $abc->file_id,
-'caption' => "
-🆔 @{$config['channel']}
-🤖 @$usernamebot
-",
-'reply_to_message_id' => $message_id,
-'parse_mode' => "html",
-]);
-}
-//====
-if (in_array($from_id, $config['admin'])){
-//==
-//====
-if($text == "🎥 | آپلود فیلم"){
-file_put_contents("settings/step.txt", 'uploadvideo');
-bot('sendmessage', [
-'chat_id' =>$chat_id,
-'text' =>"
-لطفا فیلم را بفرستید
-",
-'reply_to_message_id' => $message_id,
-'parse_mode'=>'html',
-'reply_markup' => $admin_back
-]);
-}
-//==
-elseif ($step == "uploadvideo"){
-file_put_contents("settings/step.txt", 'none');
-if(isset($message->video)){
-$adirmon = $scan+1;
-file_put_contents('settings/countuploadfile.txt', $adirmon);
-$file = $bebe->file_id;
-$file_id = $message->video->file_id;
-$code = RandomString();
-bot('sendvideo', [
-'chat_id' => $chat_id,
-'video' => $file_id,
-'caption' => "
-فایل شما با موفقیت داخل دیتابیس ذخیره شده
-شناسه فایل شما : `$code`
-لینک اشتراک گذاری فایل :
-https://t.me/{$usernamebot}?start=_$code
-",
-'reply_to_message_id' => $message_id,
-'parse_mode' => "html",
-'reply_markup' => $menu
-]);
-file_put_contents("uploader/$code.json","{'code':'$code','file_id':'$file_id','file':'video'}");
-$file = "uploader/$code.json";
-file_put_contents($file,str_replace("'",'"',file_get_contents($file)));
-}else{
-bot('sendmessage', [
-'chat_id' =>$chat_id,
-'text' => "خطا این فایل ویدیو نیست!",
-'reply_to_message_id' => $message_id,
-'parse_mode'=>'html',
-'reply_markup' => $menu
-]);
-}
-}
-//====
-if($text == "🎥 | حذف فیلم"){
-file_put_contents("settings/step.txt", 'delvideo');
-bot('sendmessage', [
-'chat_id' =>$chat_id,
-'text' => "لطفا شناسه فایل را بفرستید",
-'reply_to_message_id' => $message_id,
-'parse_mode'=>'html',
-]);
-}
-elseif ($step == "delvideo"){
-file_put_contents("settings/step.txt", "none");
-if(file_exists("uploader/$text.json")){
-unlink("uploader/$text.json");
-$adirmon = $scan-1;
-file_put_contents('settings/countuploadfile.txt', $adirmon);
-bot('sendmessage', [
-'chat_id' =>$chat_id,
-'text' => "با موفقیت فایل $text حذف شد!",
-'reply_to_message_id' => $message_id,
-'parse_mode' => "html",
-'reply_markup' => $menu
-]);
-}else{
-bot('sendmessage', [
-'chat_id' =>$chat_id,
-'text' => "خطا شناسه فایل معتبر نمیباشد.",
-'reply_to_message_id' => $message_id,
-'parse_mode' => "html",
-'reply_markup' => $menu
-]);
-}
-}
-//====
-if($text == "🔐 | جوین اجباری یک"){
-file_put_contents("settings/step.txt", 'setchannel1');
-bot('sendmessage', [
-'chat_id' =>$chat_id,
-'text' => "لطفا ای دی کانال بدون @ ارسال کنید",
-'reply_to_message_id' => $message_id,
-'parse_mode'=>'html',
-]);
-}
-elseif ($step == "setchannel1"){
-file_put_contents("settings/step.txt", 'none');
-file_put_contents("channel.txt", "$text");
-bot('sendmessage', [
-'chat_id' =>$chat_id,
-'text' => "کانال @$text تنظیم شد",
-'reply_to_message_id' => $message_id,
-'parse_mode'=>'html',
-'reply_markup' => $menu
-]);
-}
-if($text == "🔐 | جوین اجباری دو"){
-file_put_contents("settings/step.txt", 'setchannel2');
-bot('sendmessage', [
-'chat_id' =>$chat_id,
-'text' => "لطفا ای دی کانال بدون @ ارسال کنید",
-'reply_to_message_id' => $message_id,
-'parse_mode'=>'html',
-]);
-}
-elseif ($step == "setchannel2"){
-file_put_contents("settings/step.txt", 'none');
-file_put_contents("channel2.txt", "$text");
-bot('sendmessage', [
-'chat_id' =>$chat_id,
-'text' => "کانال @$text تنظیم شد",
-'reply_to_message_id' => $message_id,
-'parse_mode'=>'html',
-'reply_markup' => $menu
-]);
-}
-if($text == "🔐 | جوین اجباری سه"){
-file_put_contents("settings/step.txt", 'setchannel3');
-bot('sendmessage', [
-'chat_id' =>$chat_id,
-'text' => "لطفا ای دی کانال بدون @ ارسال کنید",
-'reply_to_message_id' => $message_id,
-'parse_mode'=>'html',
-]);
-}
-elseif ($step == "setchannel3"){
-file_put_contents("settings/step.txt", 'none');
-file_put_contents("channel3.txt", "$text");
-bot('sendmessage', [
-'chat_id' =>$chat_id,
-'text' => "کانال @$text تنظیم شد",
-'reply_to_message_id' => $message_id,
-'parse_mode'=>'html',
-'reply_markup' => $menu
-]);
-}
-if($text == "💫 | ارسال فیلم در کانال"){
-file_put_contents("settings/step.txt", 'sendmecode');
-bot('sendmessage', [
-'chat_id' =>$chat_id,
-'text' => "لطفا کپشن پست را بفرستید",
-'reply_to_message_id' => $message_id,
-'parse_mode'=>'html',
-]);
-}
-if($step == "sendmecode"){
-if(isset($message->text)){
-file_put_contents("settings/step.txt", 'sendpostchannel');  
-file_put_contents("settings/data.txt", $text);
-bot('sendmessage', [
-'chat_id' =>$chat_id,
-'text' => "لطفا کد پست را بفرستید",
-'reply_to_message_id' => $message_id,
-'parse_mode'=>'html',
-]);
-}else{
-file_put_contents("settings/step.txt", 'none');
-bot('sendmessage', [
-'chat_id' =>$chat_id,
-'text' => "خطا این متن نیست!!",
-'reply_to_message_id' => $message_id,
-'parse_mode'=>'html',
-'reply_markup' => $menu
-]);
-}
-}
-elseif($step == "sendpostchannel"){
-file_put_contents("settings/step.txt", 'sendpicch');
-file_put_contents("settings/roko.txt", $text);
-bot('sendmessage', [
-'chat_id' =>$chat_id,
-'text' => "لطفا عکس را بفرستید",
-'reply_to_message_id' => $message_id,
-'parse_mode'=>'html',
-]);
-}
-elseif($step == "sendpicch"){
-file_put_contents("settings/step.txt", 'none');
-file_put_contents("settings/roko.txt", 'none');
-file_put_contents("settings/data.txt", 'none');
-if(isset($message->photo)){
-$photo = $message->photo;
-$file_id = $photo[count($photo)-1]->file_id;
-bot('sendphoto', [
-'chat_id' =>"@".$config['channel'],
-'photo' => $file_id,
-'caption' => "
-{$data}
-∵∴∵∴∵∴∵∴∵
-⁉️ | راهنما دریافت فیلم : با زدن روی دکمه شیشه ای زیر میتونید فیلم را دریافت کنید .
-",
-'parse_mode' => "html",
-'reply_markup'=>json_encode([
-'inline_keyboard'=>[
-[['text'=>' 🔞 | دریافت فیلم ', 'url'=>"https://t.me/{$usernamebot}?start=_{$roko}"]],
-],
-'resize_keyboard'=>true,
-])
-]);
-bot('sendmessage', [
-'chat_id' =>$chat_id,
-'text' => "با موفقیت ارسال شد (:!",
-'reply_to_message_id' => $message_id,
-'parse_mode'=>'html',
-'reply_markup' => $menu
-]); 
-}else{
-bot('sendmessage', [
-'chat_id' =>$chat_id,
-'text' => "خطا این عکس نیست!",
-'reply_to_message_id' => $message_id,
-'parse_mode'=>'html',
-'reply_markup' => $menu
-]);  
-}
-}
-//====
-if($text == "🤖 | روشن"){
-if($power != "on"){
-file_put_contents("settings/power.txt","on");
-bot('sendmessage', [
-'chat_id' =>$chat_id,
-'text' =>"ربات 🤖 | روشن شد :(",
-'reply_to_message_id' => $message_id,
-'parse_mode'=>'html',
-]);
-}else{
-bot('sendmessage', [
-'chat_id' =>$chat_id,
-'text' =>"ربات از قبل 🤖 | روشن بود!️",
-'reply_to_message_id' => $message_id,
-'parse_mode'=>'html',
-]);
-}
-}
-if($text == "🤖 | خاموش"){
-if($power != "off"){
-file_put_contents("settings/power.txt", "off");
-bot('sendmessage', [
-'chat_id' =>$chat_id,
-'text' =>"ربات 🤖 | خاموش شد :) ",
-'reply_to_message_id' => $message_id,
-'parse_mode'=>'html',
-]);
-}else{
-bot('sendmessage', [
-'chat_id' =>$chat_id,
-'text' =>"ربات از قبل 🤖 | خاموش بود!️",
-'reply_to_message_id' => $message_id,
-'parse_mode'=>'html',
-]);
-}
-}
-//====
-if ($text == "📊 | آمار") {
-$member_id = explode("\n",$user);
-$member_count = count($member_id)-1;
-bot('sendmessage', [
-'chat_id' => $chat_id,
-'text' => "
-📊 | آمار ربات : $member_count
-📊 | آمار فایل های اپلود شده : $scan
-",
-'reply_to_message_id' => $message_id,
-'parse_mode' => "html",
-]);
-}
-//====
-if($text == "🌟 | پیام همهگانی"){
-file_put_contents("settings/step.txt", "sendall");
-bot('sendmessage', [
-'chat_id' =>$chat_id,
-'text' =>"
-لطفا پیام خود را ارسال کنید:
-",
-'reply_to_message_id' => $message_id,
-'parse_mode'=>'html',
-'reply_markup' => $admin_back
-]);
-}
-elseif ($step == "sendall"){
-file_put_contents("settings/step.txt", "none");
-$all_member = fopen( "member.txt", 'r');
-while( !feof( $all_member)) {
-$user = fgets( $all_member);
-$id = json_decode(file_get_contents("https://api.telegram.org/bot".API_KEY."/getChat?chat_id=".$user));
-$user2 = $id->result->id;
-if($user2 != null){
-if($text != null){
-bot('sendMessage', [
-'chat_id' =>$user,
-'text' =>$text,
-'parse_mode' =>"html",
-'disable_web_page_preview' =>"true"
-]);
-}
-//
-if($photo_id != null){
-bot('sendphoto',[
-'chat_id'=>$user,
-'photo'=>$photo_id,
-'caption'=>$caption
-]);
-}
-//
-}
-}
-}
-//====
-}
-if($text == "/creator"){
-bot('sendmessage', [
-'chat_id' =>$chat_id,
-'text' =>"
-@Sourrce_Kade
-",
-]);
-}
-unlink('error_log');
 
+}
+}
+} catch(Exception $e){
+/*if (strpos("$e", 'The provided peer id is invalid') === false) {
+yield $this->messages->sendMessage(['peer' => '@Source_town', 'message' => "$e"]);
+}*/
+} catch(\danog\MadelineProto\RPCErrorException $p){
+// yield $this->messages->sendMessage(['peer' => '@Source_town', 'message' => "$p"]);
+}
+}
+}
 
-
-
-?>
+register_shutdown_function('shutdown_function', $lock);
+closeConnection();
+$MadelineProto->async(true);
+$MadelineProto->loop(function () use ($MadelineProto) {
+yield $MadelineProto->setEventHandler('\EventHandler');
+});
+$MadelineProto->loop();
+// سورس کده
