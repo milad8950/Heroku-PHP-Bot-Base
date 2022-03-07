@@ -1,2 +1,4 @@
-php 8.1
-php_8.1
+php 7
+php7
+php_7
+php-7
