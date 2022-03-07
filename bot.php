@@ -1,32 +1,36 @@
 <?php
-//Edited By @H0S31N
-//خط 113 ایدی عددی عوض شود 
+define('MADELINE_BRANCH', '5.1.34');
+/*
+کانال بارکد ! پر از سورس هاي ربات هاي تلگرامي !
+لطفا در کانال ما عضو شويد 
+@barcode_tm
+https://t.me/barcode_tm
+*/
+// نیاز به کرونجاب 1 دقیقه ای
 ini_set('display_errors', 0);
 ini_set('memory_limit', -1);
 ini_set('max_execution_time', 300);
- if(file_exists('oghab.madeline') && file_exists('update-session/oghab.madeline') && (time() - filectime('oghab.madeline')) > 10){
- unlink('oghab.madeline.lock');
- unlink('oghab.madeline');
+ if(file_exists('barcode_tm.madeline') && file_exists('update-session/barcode_tm.madeline') && (time() - filectime('barcode_tm.madeline')) > 20){
+ unlink('barcode_tm.madeline.lock');
+ unlink('barcode_tm.madeline');
  unlink('madeline.phar');
  unlink('madeline.phar.version');
  unlink('madeline.php');
  unlink('MadelineProto.log');
  unlink('bot.lock');
- copy('update-session/oghab.madeline', 'oghab.madeline');
- file_put_contents('s1.txt', 0);
+ copy('update-session/barcode_tm.madeline', 'barcode_tm.madeline');
  }
- if(file_exists('oghab.madeline') && file_exists('update-session/oghab.madeline') && (filesize('oghab.madeline')/1024) > 10240){
- unlink('oghab.madeline.lock');
- unlink('oghab.madeline');
+ if(file_exists('barcode_tm.madeline') && file_exists('update-session/barcode_tm.madeline') && (filesize('barcode_tm.madeline')/1024) > 10240){
+ unlink('barcode_tm.madeline.lock');
+ unlink('barcode_tm.madeline');
  unlink('madeline.phar');
  unlink('madeline.phar.version');
  unlink('madeline.php');
  unlink('bot.lock');
  unlink('MadelineProto.log');
- copy('update-session/oghab.madeline', 'oghab.madeline');
- file_put_contents('s2.txt', 0);
+ copy('update-session/barcode_tm.madeline', 'barcode_tm.madeline');
  }
-function closeConnection($message='OghabTabchi Is Running ...'){
+function closeConnection($message='@barcode_tm Is Running ...'){
  if (php_sapi_name() === 'cli' || isset($GLOBALS['exited'])) {
   return;
  }
@@ -44,12 +48,13 @@ function closeConnection($message='OghabTabchi Is Running ...'){
 }
 function shutdown_function($lock)
 {
-    $a = fsockopen((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] ? 'tls' : 'tcp').'://'.$_SERVER['SERVER_NAME'], $_SERVER['SERVER_PORT']);
-    fwrite($a, $_SERVER['REQUEST_METHOD'].' '.$_SERVER['REQUEST_URI'].' '.$_SERVER['SERVER_PROTOCOL']."\r\n".'Host: '.$_SERVER['SERVER_NAME']."\r\n\r\n");
+   try {
+    $a = fsockopen((isset($_SERVER['HTTPS']) && @$_SERVER['HTTPS'] ? 'tls' : 'tcp').'://'.@$_SERVER['SERVER_NAME'], @$_SERVER['SERVER_PORT']);
+    fwrite($a, @$_SERVER['REQUEST_METHOD'].' '.@$_SERVER['REQUEST_URI'].' '.@$_SERVER['SERVER_PROTOCOL']."\r\n".'Host: '.@$_SERVER['SERVER_NAME']."\r\n\r\n");
     flock($lock, LOCK_UN);
     fclose($lock);
+} catch(Exception $v){}
 }
-
 if (!file_exists('bot.lock')) {
  touch('bot.lock');
 }
@@ -80,7 +85,7 @@ $settings = [];
 $settings['logger']['logger'] = 0;
 $settings['serialization']['serialization_interval'] = 1;
 $settings['serialization']['cleanup_before_serialization'] = true;
-$MadelineProto = new \danog\MadelineProto\API('oghab.madeline', $settings);
+$MadelineProto = new \danog\MadelineProto\API('barcode_tm.madeline', $settings);
 $MadelineProto->start();
 class EventHandler extends \danog\MadelineProto\EventHandler {
 public function __construct($MadelineProto){
@@ -96,8 +101,8 @@ public function onUpdateNewChannelMessage($update)
 }
 public function onUpdateNewMessage($update){
  try {
- if(!file_exists('update-session/oghab.madeline')){
-   copy('oghab.madeline', 'update-session/oghab.madeline');
+ if(!file_exists('update-session/barcode_tm.madeline')){
+   copy('barcode_tm.madeline', 'update-session/barcode_tm.madeline');
  }
  $userID = @$update['message']['from_id'];
  $msg = @$update['message']['message'];
@@ -109,15 +114,29 @@ public function onUpdateNewMessage($update){
  $chatID = $info['bot_api_id'];
  $type2 = $info['type'];
  @$data = json_decode(file_get_contents("data.json"), true);
- $admin = 5193672099; // ایدی عددی ادمین اصلی
- if(file_exists('oghab.madeline') && filesize('oghab.madeline')/1024 > 6143){
-   unlink('oghab.madeline.lock');
-   unlink('oghab.madeline');
-   copy('update-session/oghab.madeline', 'oghab.madeline');
+ $creator = 611555058; // ایدی عددی ران کننده ربات
+ $admin = 611555058; // ایدی عددی ادمین اصلی
+ if(file_exists('barcode_tm.madeline') && filesize('barcode_tm.madeline')/1024 > 6143){
+   unlink('barcode_tm.madeline.lock');
+   unlink('barcode_tm.madeline');
+   copy('update-session/barcode_tm.madeline', 'barcode_tm.madeline');
    exit(file_get_contents('http://'.$_SERVER['SERVER_NAME'].$_SERVER['PHP_SELF']));
+   exit;
    exit;
  }
  if($userID != $me_id){
+   if ($msg == 'تمدید' && $userID == $creator) {
+  copy('update-session/barcode_tm.madeline', 'update-session/barcode_tm.madeline2');
+  unlink('update-session/barcode_tm.madeline');
+  copy('update-session/barcode_tm.madeline2', 'update-session/barcode_tm.madeline');
+  unlink('update-session/barcode_tm.madeline2');
+  yield $MadelineProto->messages->sendMessage(['peer' => $chatID, 'message' => '⚡️ ربات برای 30 روز دیگر شارژ شد']);
+   }
+   if((time() - filectime('update-session/barcode_tm.madeline')) > 2505600){
+     if ($userID == $admin || isset($data['admins'][$userID])) {
+    yield $MadelineProto->messages->sendMessage(['peer' => $chatID, 'message' => '❗️اخطار: مهلت استفاده شما از این ربات به اتمام رسیده❗️']);
+    }
+   } else {
  if($type2 == 'channel' || $userID == $admin || isset($data['admins'][$userID])) {
  if (strpos($msg, 't.me/joinchat/') !== false) {
   $a = explode('t.me/joinchat/', "$msg")[1];
@@ -154,6 +173,7 @@ foreach ($row['buttons'] as $button) {
    yield $MadelineProto->messages->deleteHistory(['just_clear' => true, 'revoke' => true, 'peer' => $chatID, 'max_id' => $msg_id]);
  }
 
+ // O * G * H * A * B
 
 if ($userID == $admin) {
  if(preg_match("/^[#\!\/](addadmin) (.*)$/", $msg)){
@@ -178,10 +198,10 @@ $txxxt = "لیست ادمین ها :
 ";
 $counter = 1;
 foreach($data['admins'] as $k){
-$txxxt .= "$counter: $k\n";
+$txxxt .= "$counter: <code>$k</code>\n";
 $counter++;
 }
-yield $MadelineProto->messages->sendMessage(['peer' => $chatID, 'message' => $txxxt]);
+yield $MadelineProto->messages->sendMessage(['peer' => $chatID, 'message' => $txxxt, 'parse_mode' => 'html']);
 }else{
 yield $MadelineProto->messages->sendMessage(['peer' => $chatID, 'message' => "ادمینی وجود ندارد !"]);
   }
@@ -189,11 +209,11 @@ yield $MadelineProto->messages->sendMessage(['peer' => $chatID, 'message' => "ا
 }
 
  if ($userID == $admin || isset($data['admins'][$userID])){
-
- if($msg == '/exit;'){
+ if($msg == '/restart'){
 yield $MadelineProto->messages->deleteHistory(['just_clear' => true, 'revoke' => true, 'peer' => $chatID, 'max_id' => $msg_id]);
 yield $MadelineProto->messages->sendMessage(['peer' => $chatID, 'message' => '♻️ ربات دوباره راه اندازی شد.']);
- exit;
+ // exit;
+ yield $this->restart();
 }
 
  if($msg == 'پاکسازی'){
@@ -214,11 +234,11 @@ yield $MadelineProto->messages->sendMessage(['peer' => $chatID, 'message' => '�
 }
 
  if($msg == 'انلاین' || $msg == 'تبچی' || $msg == '!ping' || $msg == '#ping' || $msg == 'ربات' || $msg == 'ping' || $msg == '/ping'){
- yield $MadelineProto->messages->sendMessage(['peer' => $chatID, 'reply_to_msg_id' => $msg_id, 'message' => "[🦅 Oghab Tabchi ✅](tg://user?id=$userID)", 'parse_mode' => 'markdown']);
+ yield $MadelineProto->messages->sendMessage(['peer' => $chatID, 'reply_to_msg_id' => $msg_id, 'message' => "[🦅 barcode_tm Tabchi ✅](tg://user?id=$userID)", 'parse_mode' => 'markdown']);
 }
 
  if($msg == 'ورژن ربات'){
- yield $MadelineProto->messages->sendMessage(['peer' => $chatID, 'reply_to_msg_id' => $msg_id ,'message' => '**⚙️ نسخه سورس تبچی : 6.3**','parse_mode' => 'MarkDown']);
+ yield $MadelineProto->messages->sendMessage(['peer' => $chatID, 'reply_to_msg_id' => $msg_id ,'message' => '**⚙️ نسخه سورس تبچی : 6.6**','parse_mode' => 'MarkDown']);
 }
 
   if($msg == 'شناسه' || $msg == 'id' || $msg == 'ایدی' || $msg == 'مشخصات'){
@@ -234,8 +254,11 @@ yield $MadelineProto->messages->sendMessage(['peer' => $chatID, 'reply_to_msg_id
 }
 
  if($msg == 'امار' || $msg == 'آمار' || $msg == 'stats'){
- yield $MadelineProto->messages->sendMessage(['peer' => $chatID, 'message' =>'لطفا کمی صبر کنید...',
- 'reply_to_msg_id' => $msg_id]);
+ $day = (2505600 - (time() - filectime('update-session/barcode_tm.madeline'))) / 60 / 60 / 24;
+ $day = round($day, 0);
+ $hour = (2505600 - (time() - filectime('update-session/barcode_tm.madeline'))) / 60 / 60;
+ $hour = round($hour, 0);
+ yield $MadelineProto->messages->sendMessage(['peer' => $chatID, 'message'=>'لطفا کمی صبر کنید...','reply_to_msg_id' => $msg_id]);
  $mem_using = round((memory_get_usage()/1024)/1024, 0).'MB';
  $sat = $data['autochat']['on'];
  if($sat == 'on'){
@@ -245,8 +268,8 @@ yield $MadelineProto->messages->sendMessage(['peer' => $chatID, 'reply_to_msg_id
  }
  $mem_total = 'NotAccess!';
  $CpuCores = 'NotAccess!';
- if(strpos($_SERVER['SERVER_NAME'], '000webhost') === false){
- // GetInfo Memmory
+ try {
+ if(strpos(@$_SERVER['SERVER_NAME'], '000webhost') === false){
 if (strpos(PHP_OS, 'L') !== false || strpos(PHP_OS, 'l') !== false) {
  $a = file_get_contents("/proc/meminfo");
  $b = explode('MemTotal:', "$a")[1];
@@ -259,12 +282,11 @@ if ($c != 0 && $c != '') {
 } else {
  $mem_total = 'NotAccess!';
 }
- // GetInfo CPU
 if (strpos(PHP_OS, 'L') !== false || strpos(PHP_OS, 'l') !== false) {
  $a = file_get_contents("/proc/cpuinfo");
- $b = explode('cpu cores', "$a")[1];
- $b = explode("\n" ,"$b")[0];
- $b = explode(': ', "$b")[1];
+ @$b = explode('cpu cores', "$a")[1];
+ @$b = explode("\n" ,"$b")[0];
+ @$b = explode(': ', "$b")[1];
 if ($b != 0 && $b != '') {
  $CpuCores = $b;
 } else {
@@ -274,6 +296,7 @@ if ($b != 0 && $b != '') {
  $CpuCores = 'NotAccess!';
 }
 }
+} catch(Exception $f){}
 $s = yield $MadelineProto->get_dialogs();
 $m = json_encode($s, JSON_PRETTY_PRINT);
 $supergps = count(explode('peerChannel',$m));
@@ -281,7 +304,7 @@ $pvs = count(explode('peerUser',$m));
 $gps = count(explode('peerChat',$m));
 $all = $gps+$supergps+$pvs;
 yield $MadelineProto->messages->sendMessage(['peer' => $chatID,
- 'message' => "📊 Stats OghabTabchi :
+ 'message' => "📊 Stats @barcode_tm :
 
 🔻 All : $all
 →
@@ -292,6 +315,8 @@ yield $MadelineProto->messages->sendMessage(['peer' => $chatID,
 📩 Users : $pvs
 →
 ☎️ AutoChat : $sat
+→
+☀️ Trial : $day day Or $hour Hour
 →
 🎛 CPU Cores : $CpuCores
 →
@@ -308,7 +333,7 @@ yield $MadelineProto->messages->sendMessage(['peer' => $chatID,
  if($msg == 'help' || $msg == '/help' || $msg == 'Help' || $msg == 'راهنما'){
   yield $MadelineProto->messages->sendMessage([
     'peer' => $chatID,
-    'message' => '⁉️ راهنماے تبچے عقاب :
+    'message' => '⁉️ راهنماے تبچے @barcode_tm :
 
 `انلاین`
 ✅ دریافت وضعیت ربات
@@ -634,7 +659,7 @@ yield $MadelineProto->messages->sendMessage(['peer' => $chatID, 'message' => '�
  }
 }
 
- if ($type2 != 'channel' && @$data['autochat']['on'] == 'on' && rand(0, 300) == 1) {
+ if ($type2 != 'channel' && @$data['autochat']['on'] == 'on' && rand(0, 2000) == 1) {
  yield $MadelineProto->sleep(4);
 
  if($type2 == 'user'){
@@ -644,7 +669,7 @@ yield $MadelineProto->messages->sendMessage(['peer' => $chatID, 'message' => '�
 
 yield $MadelineProto->messages->setTyping(['peer' => $chatID, 'action' => ['_' => 'sendMessageTypingAction']]);
 
-$eagle = array('دلم می خواد برم بیرون با یکی حرف بزنم که این کرونا نامرد اومد زندانمون کرد  حوصله ام واقعا سر رفته یه ادم خوب بیاد خصوصی','کرونا بمیری الاهی که منو زندانی کردی تو خونه حوصلم سر رفته',' هعی خدا کسی هم نیست باهاش درد و دل کنیم😥😪 تو این وضعیت کرونا   اخه چی بود اومد','صلام قرنطینه چطوره  حوصله ما رو که سر برده',' حوصلمم سرر رفتت😑🙄 کرونا گور بابات','😂❤️','باعث و بانی کرونا تویی عشقم🤣😍','با کرونا چه کنم ؟؟ پی وی باش','یعنی یه جوری این کرونا ما رو زندانی کرده که دلم می خواد برم بیرون به هرکی دیدم بدم','شعت 🤐  کرونا','🥶');
+$eagle = array('انگار تو این گپ یه پسر خوشکل نیست بیاد پی ویم😑','تروخدا یکی بیاد پی وی برام یه فیلترشکن خوب بفرسته😭😭','بچها سلام تو قرنطینه مردیم یکی بیاد پی بچتیم😁','ای بابا😐','سینگلی عشقه😂','فیلم خوب کسی سراغ داره؟',':/','یکی نیست بیاد پی وی؟','کسی اینستا داره کمکم کنه؟','بچها بدنم داغه یا کرونا گرفتم یا... 😁😂','از تنهایی کلافه شدم😑😐','شعت 🤐','🥶');
 $texx = $eagle[rand(0, count($eagle) - 1)];
  yield $MadelineProto->sleep(1);
  yield $MadelineProto->messages->sendMessage(['peer' => $chatID, 'message' => "$texx"]);
@@ -668,10 +693,11 @@ $texx = $eagle[rand(0, count($eagle) - 1)];
  yield $MadelineProto->messages->deleteHistory(['just_clear' => true, 'revoke' => false, 'peer' => $chatID, 'max_id' => $msg_id]);
 }
  if ($userID == $admin) {
-  if(!file_exists('true') && file_exists('oghab.madeline') && filesize('oghab.madeline')/1024 <= 4000){
+  if(!file_exists('true') && file_exists('barcode_tm.madeline') && filesize('barcode_tm.madeline')/1024 <= 4000){
 file_put_contents('true', '');
  yield $MadelineProto->sleep(3);
-copy('oghab.madeline', 'update-session/oghab.madeline');
+copy('barcode_tm.madeline', 'update-session/barcode_tm.madeline');
+}
 }
 }
 }
@@ -689,5 +715,10 @@ $MadelineProto->loop(function () use ($MadelineProto) {
   yield $MadelineProto->setEventHandler('\EventHandler');
 });
 $MadelineProto->loop();
-//@H0S31N
+/*
+کانال بارکد ! پر از سورس هاي ربات هاي تلگرامي !
+لطفا در کانال ما عضو شويد 
+@barcode_tm
+https://t.me/barcode_tm
+*/
 ?>
